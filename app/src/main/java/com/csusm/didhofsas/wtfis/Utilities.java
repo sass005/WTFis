@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.RadioButton;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class Utilities
 {
@@ -197,7 +198,16 @@ public class Utilities
     //API TEST
     public void setNewCurrencyValues()
     {
-        String apiReturn = String.valueOf(new APICurrencyConnector().execute());
+        APICurrencyConnector api = new APICurrencyConnector();
+        api.execute();
+        String apiReturn = null;
+        try {
+            apiReturn = api.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
         if (apiReturn.charAt(0) == 'c')
             return;
         Log.d("Currency", "Return of API: " + apiReturn);
@@ -206,9 +216,15 @@ public class Utilities
         for (int i = 0; i < apiReturn.length();i++)
         {
             if (progress == 4)
-                sGBP = sGBP + apiReturn.charAt(i);
-            if (progress == 5)
-                sUSD = sUSD + apiReturn.charAt(i);
+                if(apiReturn.charAt(i) == ',')
+                    progress++;
+                else
+                    sGBP = sGBP + apiReturn.charAt(i);
+            if (progress == 6)
+                if(apiReturn.charAt(i) == '}')
+                    progress++;
+                else
+                    sUSD = sUSD + apiReturn.charAt(i);
             if(apiReturn.charAt(i) == ':')
                 progress++;
         }
