@@ -27,7 +27,9 @@ public class APICurrencyConnector extends AsyncTask<Void, Void, String>
                     stringBuilder.append(line).append("\n");
                 }
                 bufferedReader.close();
-                return stringBuilder.toString();
+                String result = stringBuilder.toString();
+                Log.i("API", "Currency API reached successfully: " + result);
+                return result;
             }
             finally
             {
