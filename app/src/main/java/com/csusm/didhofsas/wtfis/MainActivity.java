@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 public class MainActivity extends Activity implements View.OnClickListener, AdapterView.OnItemClickListener, AdapterView.OnItemSelectedListener, TextWatcher, View.OnFocusChangeListener {
     EditText inputHome, inputTravel;                 //Input Number
@@ -20,7 +21,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
     ImageButton reloadButton, changeCountryButton;      //Buttons
     RadioButton[] radioHome, radioTravel;               //Radiobuttons (1-6 left, 7-12 right)
     Utilities util;                                     //Access to necessary Methods
+    TextView homeunitview, travelunitview;              //TextViews above input fields
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    CountrycodeDataSource db;
 
 
     //Creates connection to XML
@@ -34,12 +37,17 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        db = new CountrycodeDataSource(this, true);
+        db.open();
+
         //Finding IDS
         inputHome = (EditText)findViewById(R.id.number_input);
         inputTravel = (EditText)findViewById(R.id.number_output);
         inputUnit = (Spinner)findViewById(R.id.unitInput);
         reloadButton = (ImageButton)findViewById(R.id.reload_button);
         changeCountryButton = (ImageButton)findViewById(R.id.change_country_button);
+        homeunitview = (TextView) findViewById(R.id.homeunitview);
+        travelunitview = (TextView)findViewById(R.id.travelunitview);
 
         radioHome = new RadioButton[6];
         radioHome[0] = ((RadioButton)findViewById(R.id.radioButton1));
@@ -56,12 +64,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
         radioTravel[3] = ((RadioButton)findViewById(R.id.radioButton10));
         radioTravel[4] = ((RadioButton)findViewById(R.id.radioButton11));
         radioTravel[5] = ((RadioButton)findViewById(R.id.radioButton12));
-
-        //Setting Adapter for Spinner
-        String[] spinnerArray = {"Lenght/ Distance", "Weight", "Liquids", "Currency", "Temperature"};
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerArray);
-        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        inputUnit.setAdapter(spinnerArrayAdapter);
 
         //Setting Listener
         inputHome.setOnFocusChangeListener(this);
@@ -84,11 +86,116 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
         radioTravel[4].setOnClickListener(this);
         radioTravel[5].setOnClickListener(this);
 
+        db.selectAllFromTable(CountrycodeDBHelper.APPUSER_TABLE, CountrycodeDataSource.USER_COLUMNS);
+
         //Access to necessary Data
         util = new Utilities(this);
         Intent i = new Intent(this, CountryActivity.class);
         i.putExtra("country_array", util.getAllCountryNames());
+        db.close();
         startActivityForResult(i, 0);
+
+        db.open();
+
+        //DATABASE TEST IN PROGESS
+
+        db.createCountry(0, "European Union", true);
+        db.createCountry(1, "United States of America", false);
+        db.createCountry(2, "United Kingdom", true);
+        db.createUser(0);
+        db.createMeasure(0, "Lenghth/ Distance");
+        db.createMeasure(1, "Weight");
+        db.createMeasure(2, "Liquids");
+        db.createMeasure(3, "Currency");
+        db.createMeasure(4, "Temperature");
+        db.createUnit("kilometer", 0.001, 0);
+        db.createUnit("meter", 1.0, 0);
+        db.createUnit("centimeter", 100.0, 0);
+        db.createUnit("millimeter", 1000.0, 0);
+        db.createUnit("miles", 0.00062137, 0);
+        db.createUnit("yards", 1.09361, 0);
+        db.createUnit("feet", 3.28084, 0);
+        db.createUnit("inches", 39.3701, 0);
+        db.createUnit("ton", 0.001, 1);
+        db.createUnit("kilogram", 1.0, 1);
+        db.createUnit("gram", 1000.0, 1);
+        db.createUnit("pound", 2.20462,1);
+        db.createUnit("ounce", 35.274,1);
+        db.createUnit("liter", 1.0, 2);
+        db.createUnit("milliliter", 1000.0, 2);
+        //TODO THINK ABOUT REMOVING (country) before showing in APP
+        db.createUnit("gallon (us)", 0.264172, 2);
+        db.createUnit("quart (us)", 1.05669, 2);
+        db.createUnit("pint (us)", 2.11338,2);
+        db.createUnit("cup (us)", 4.1667, 2);
+        db.createUnit("fl. ounce (us)", 33.814, 2);
+        db.createUnit("gallon (uk)", 0.219969, 2);
+        db.createUnit("quart (uk)", 0.879877, 2);
+        db.createUnit("pint (uk)", 1.75975, 2);
+        db.createUnit("cup (uk)", 3.51951, 2);
+        db.createUnit("fl. ounce (uk)", 35.1951, 2);
+        db.createCurrency("euro", 1.0);
+        db.createCurrency("us dollar", 1.057);
+        db.createCurrency("pound sterling", 0.854);
+        db.createUnit("celsius", 1.0, 4);
+        db.createUnit("fahrenheit", 0.0, 4);
+
+
+
+        db.linkCountryUnit(0, "kilometer");
+        db.linkCountryUnit(0, "meter");
+        db.linkCountryUnit(0, "centimeter");
+        db.linkCountryUnit(0, "millimeter");
+        db.linkCountryUnit(0, "ton");
+        db.linkCountryUnit(0, "kilogram");
+        db.linkCountryUnit(0, "gram");
+        db.linkCountryUnit(0, "liter");
+        db.linkCountryUnit(0, "milliliter");
+        db.linkCountryUnit(0, "euro");
+        db.linkCountryUnit(0, "celsius");
+        db.linkCountryUnit(1, "miles");
+        db.linkCountryUnit(1, "yards");
+        db.linkCountryUnit(1, "feet");
+        db.linkCountryUnit(1, "inches");
+        db.linkCountryUnit(1, "pound");
+        db.linkCountryUnit(1, "ounce");
+        db.linkCountryUnit(1, "gallon (us)");
+        db.linkCountryUnit(1, "quart (us)");
+        db.linkCountryUnit(1, "pint (us)");
+        db.linkCountryUnit(1, "cup (us)");
+        db.linkCountryUnit(1, "fl. ounce (us)");
+        db.linkCountryUnit(1, "us dollar");
+        db.linkCountryUnit(1, "fahrenheit");
+        db.linkCountryUnit(2, "miles");
+        db.linkCountryUnit(2, "yards");
+        db.linkCountryUnit(2, "feet");
+        db.linkCountryUnit(2, "inches");
+        db.linkCountryUnit(2, "ton");
+        db.linkCountryUnit(2, "pound");
+        db.linkCountryUnit(2, "ounce");
+        db.linkCountryUnit(2, "gallon (uk)");
+        db.linkCountryUnit(2, "quart (uk)");
+        db.linkCountryUnit(2, "pint (uk)");
+        db.linkCountryUnit(2, "cup (uk)");
+        db.linkCountryUnit(2, "fl. ounce (uk)");
+        db.linkCountryUnit(2, "pound sterling");
+        db.linkCountryUnit(2, "celsius");
+
+
+        /*db.selectAllFromTable(CountrycodeDBHelper.COUNTRY_TABLE, CountrycodeDataSource.COUNTRY_COLUMNS);*/
+        db.selectAllFromTable(CountrycodeDBHelper.UNIT_TABLE, CountrycodeDataSource.UNIT_COLUMNS);
+        /*db.selectAllFromTable(CountrycodeDBHelper.APPUSER_TABLE, CountrycodeDataSource.USER_COLUMNS);
+        db.selectAllFromTable(CountrycodeDBHelper.MEASURE_TABLE, CountrycodeDataSource.MEASURE_COLUMNS);
+        db.selectAllFromTable(CountrycodeDBHelper.CURRENCY_TABLE, CountrycodeDataSource.CURRENCY_COLUMNS);*/
+        db.selectAllFromTable(CountrycodeDBHelper.COUNTRY_UNIT_TABLE, CountrycodeDataSource.COUNTRY_USER_COLUMNS);
+
+        String[] spinnerArray = db.selectNamesInTable(CountrycodeDBHelper.MEASURE_TABLE, CountrycodeDataSource.MEASURE_COLUMNS);
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerArray);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        inputUnit.setAdapter(spinnerArrayAdapter);
+        inputUnit.setSelection(0);
+
+        db.close();
     }
 
     //Saves chosenCountries
@@ -96,10 +203,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
     //Requests new Currency Values out of API
     public void onActivityResult(int requestNumber, int resultNumber, Intent data)
     {
+        db.open();
         Log.d(LOG_TAG, "onActivityResult wurde aufgerufen");
         util.setChosenCountries(data.getExtras().getInt("homeCode"), data.getExtras().getInt("travelCode"));
         util.fillAllRadio();
-        util.setNewCurrencyValues();
+        //util.setNewCurrencyValues();
+        db.close();
     }
 
     //Country Button opens CountryActivity
@@ -108,6 +217,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
     @Override
     public void onClick(View v)
     {
+        db.open();
         switch (v.getId())
         {
             case R.id.reload_button:
@@ -134,8 +244,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
                         util.setSelectedRadioHome(i);
                         Log.d(LOG_TAG, "RadioButton: " + i);
                     }
-                // calc numbers
+                // calc numbers + change TextView of InputFields
                 util.calc();
+                util.changeUnitView();
 
                 break;
 
@@ -152,10 +263,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
                         util.setSelectedRadioTravel(i);
                         Log.d(LOG_TAG, "RadioButton: " + i);
                     }
-                //calc numbers
+                //calc numbers + change TextView of InputFields
                 util.calc();
+                util.changeUnitView();
                 break;
         }
+        db.close();
 
     }
 
@@ -163,8 +276,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Adap
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
     {
+        db.open();
         util.fillAllRadio();
         util.calc();
+        util.changeUnitView();
+        db.close();
     }
 
     //Oversees from which Side to Read and to which SIde to Write to

@@ -4,6 +4,8 @@ import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 
+import java.util.ArrayList;
+
 public class Memory
 {
     private Countrycode euData, ukData, usData;
@@ -20,9 +22,6 @@ public class Memory
         createCountries();
     }
 
-    public boolean equalTemp(){
-        return (dataHome.isTempC() == dataTravel.isTempC());
-    }
 
     public boolean hasHomeCountryC(){
         return (dataHome.isTempC());
@@ -80,10 +79,10 @@ public class Memory
     {
         switch (chosenHome)
         {
-            case 0:
+            case 1:
                 dataHome = usData;
                 break;
-            case 1:
+            case 2:
                 dataHome = ukData;
                 break;
             default:
@@ -96,10 +95,10 @@ public class Memory
     {
         switch (chosenTravel)
         {
-            case 0:
+            case 1:
                 dataTravel = usData;
                 break;
-            case 1:
+            case 2:
                 dataTravel = ukData;
                 break;
             default:
@@ -217,6 +216,22 @@ public class Memory
     {
         usData.setCurrency(usd);
         ukData.setCurrency(gbp);
+    }
+
+    public ArrayList<Unit> getHomeUnits() {
+        return main.db.getSelectedUnits(dataHome.getRegioncode(), checkedCategory);
+    }
+
+    public ArrayList<Unit> getTravelUnits() {
+        return main.db.getSelectedUnits(dataTravel.getRegioncode(), checkedCategory);
+    }
+
+    public int getSelectedRadioHome() {
+        return selectedRadioHome;
+    }
+
+    public int getSelectedRadioTravel() {
+        return selectedRadioTravel;
     }
 }
 

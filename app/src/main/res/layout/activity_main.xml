@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
         android:ems="10"
-        android:layout_below="@+id/homeunit"
+        android:layout_below="@+id/homeunitview"
         android:layout_marginTop="29dp"
         android:id="@+id/number_input"
         android:text="1" />
@@ -190,19 +190,17 @@
         android:layout_alignParentStart="true" />
 
     <TextView
-        android:text="Mile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/travelunit"
+        android:id="@+id/travelunitview"
         android:layout_alignParentTop="true"
         android:layout_toLeftOf="@+id/reload_button"
         android:layout_toStartOf="@+id/reload_button" />
 
     <TextView
-        android:text="Kilometer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/homeunit"
+        android:id="@+id/homeunitview"
         android:layout_alignParentTop="true"
         android:layout_alignRight="@+id/r1"
         android:layout_alignEnd="@+id/r1" />

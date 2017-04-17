@@ -4,6 +4,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.RadioButton;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -20,7 +22,7 @@ public class Utilities
         this.main = main;
     }
 
-    //TODO REWRITE
+
     public void calc()
     {
         double solution;
@@ -29,16 +31,19 @@ public class Utilities
         if(memory.getCheckedCategory() == 4){
             //Methodenaufruf for Tempeture
             calcTemp();
+            return;
         }
 
         if(memory.isFocusOnHome()){
             input = Double.parseDouble(main.inputHome.getText().toString());
             solution = Conversion.fixedconversion(input, memory.getHomeExchangeRate(),memory.getTravelExchangeRate());
-            main.inputTravel.setText("" + solution);
+            DecimalFormat df = custumDecimalFormat(solution);
+            main.inputTravel.setText("" + df.format(solution));
         }else{
             input = Double.parseDouble(main.inputTravel.getText().toString());
             solution = Conversion.fixedconversion(input, memory.getTravelExchangeRate(),memory.getHomeExchangeRate());
-            main.inputHome.setText("" + solution);
+            DecimalFormat df = custumDecimalFormat(solution);
+            main.inputHome.setText("" + df.format(solution));
         }
     }
 
@@ -46,20 +51,29 @@ public class Utilities
     private void calcTemp(){
         double solution;
         double input;
+        boolean isHomeCelsius = memory.getHomeUnits().get(0).calc_factor > 0;
+        Log.i("CALC","Home has Celsius: " +isHomeCelsius);
+        boolean isTravelCelsius = memory.getTravelUnits().get(0).calc_factor > 0;
+        Log.i("CALC", "Travel has Celsius: " + isTravelCelsius);
         //For FocusOnHome
         if(memory.isFocusOnHome()){
             input = Double.parseDouble(main.inputHome.getText().toString());
 
             // Checks if Same Unit (C=C or F=F)
-            if(memory.equalTemp()){
+            if(isHomeCelsius == isTravelCelsius){
+                Log.i("CALC", "No Conversion needed");
                 solution = input;
 
                 //HomeCounry ist in Celsius, TravelCounry hat Fahrenheit
-            }else if(memory.hasHomeCountryC()){
+            }else if(isHomeCelsius)
+            {
+                Log.i("CALC", "Convert Celsius to Fahrenheit");
                 solution = Conversion.celsiusToFahrenheit(input);
 
                 //HomeCounry ist in Fahrenheit, TravelCounry hat Celsius
-            }else{
+            }else
+            {
+                Log.i("CALC", "Convert Fahrenheit to Celsius");
                 solution = Conversion.fahrenheitToCelsius(input);
             }
 
@@ -71,15 +85,18 @@ public class Utilities
             input = Double.parseDouble(main.inputTravel.getText().toString());
 
             // Checks if Same Unit (C=C or F=F)
-            if(memory.equalTemp()){
+            if(isHomeCelsius == isTravelCelsius){
+                Log.i("CALC", "No Conversion needed");
                 solution = input;
 
                 //HomeCounry ist in Celsius, TravelCounry hat Fahrenheit
-            }else if(memory.hasHomeCountryC()){
+            }else if(isHomeCelsius){
+                Log.i("CALC", "Convert Celsius to Fahrenheit");
                 solution = Conversion.fahrenheitToCelsius(input);
 
                 //HomeCounry ist in Fahrenheit, TravelCounry hat Celsius
             }else{
+                Log.i("CALC", "Convert Fahrenheit to Celsius");
                 solution = Conversion.celsiusToFahrenheit(input);
             }
             main.inputHome.setText("" + solution);
@@ -90,75 +107,71 @@ public class Utilities
     //Changes Radiobutton Text
     public void fillAllRadio()
     {
-        fillSingleRadio(memory.getRadioHome(), memory.getDataHome());
-        fillSingleRadio(memory.getRadioTravel(), memory.getDataTravel());
+        int checkedCategory = main.inputUnit.getSelectedItemPosition();
+        memory.setCheckedCategory(checkedCategory);
+        Log.i("Category", "checked Category: " + checkedCategory);
+        Log.i(LOG_TAG, "Home Radio Buttons");
+        fillSingleRadio(memory.getRadioHome(), memory.getHomeUnits(), checkedCategory);
+        Log.i(LOG_TAG, "Travel Radio Buttons");
+        fillSingleRadio(memory.getRadioTravel(), memory.getTravelUnits(), checkedCategory);
     }
 
     //Reads checked Category of Spinner
     //saves into Memory
     //Renames and Hides RadioButtons according to chosen Category
-    private void fillSingleRadio(RadioButton[] rb, Countrycode cc)
+    private void fillSingleRadio(RadioButton[] rb, ArrayList<Unit> units, int checkedCategory)
     {
         //check selected Category in spinner and save it
-        int checkedCategory = main.inputUnit.getSelectedItemPosition();
-        memory.setCheckedCategory(checkedCategory);
+
 
         switch (checkedCategory)
         {
             case 0: //Length
-                String[] temp = cc.getLenghthName();
-
                 //Set right name for all used Radiobuttons
-                for(int i = 0; i < temp.length; i++)
+                for(int i = 0; i < units.size(); i++)
                 {
                     rb[i].setVisibility(View.VISIBLE);
-                    rb[i].setText(temp[i]);
+                    rb[i].setText(units.get(i).name);
                 }
 
                 //hide all unused Radiobuttons
-                for(int i = temp.length; i < 6; i++)
+                for(int i = units.size(); i < 6; i++)
                 {
                     rb[i].setVisibility(View.INVISIBLE);
                 }
                 break;
             case 1: //Weight
-                String[] temp2 = cc.getWeightName();
-
                 //Set right name for all used Radiobuttons
-                for(int i = 0; i < temp2.length; i++)
+                for(int i = 0; i < units.size(); i++)
                 {
                     rb[i].setVisibility(View.VISIBLE);
-                    rb[i].setText(temp2[i]);
+                    rb[i].setText(units.get(i).name);
                 }
 
                 //hide all unused Radiobuttons
-                for(int i = temp2.length; i < 6; i++)
+                for(int i = units.size(); i < 6; i++)
                 {
                     rb[i].setVisibility(View.INVISIBLE);
                 }
                 break;
             case 2: //Liquids
-                String[] temp3 = cc.getLiquidName();
-
                 //Set right name for all used Radiobuttons
-                for(int i = 0; i < temp3.length; i++)
+                for(int i = 0; i < units.size(); i++)
                 {
                     rb[i].setVisibility(View.VISIBLE);
-                    rb[i].setText(temp3[i]);
+                    rb[i].setText(units.get(i).name);
                 }
 
                 //hide all unused Radiobuttons
-                for(int i = temp3.length; i < 6; i++)
+                for(int i = units.size(); i < 6; i++)
                 {
                     rb[i].setVisibility(View.INVISIBLE);
                 }
                 break;
             case 3: //Currency
-                String temp4 = cc.getCurrencyName();
-
                 //set only first one visible
                 rb[0].setVisibility(View.VISIBLE);
-                rb[0].setText(temp4);
+                rb[0].setText(units.get(0).name);
 
                 //hide all unused Radiobuttons
                 for(int i = 1; i < 6; i++)
@@ -172,10 +185,7 @@ public class Utilities
                 rb[0].setVisibility(View.VISIBLE);
 
                 //Can only be Celsius or Fahrenheit
-                if (cc.isTempC())
-                    rb[0].setText("Celsius");
-                else
-                    rb[0].setText("Fahrenheit");
+                rb[0].setText(units.get(0).name);
 
                 //hide all unused Radiobuttons
                 for(int i = 1; i < 6; i++)
@@ -264,5 +274,24 @@ public class Utilities
     public void setSelectedRadioTravel(int selectedRadioTravel)
     {
         memory.setSelectedRadioTravel(selectedRadioTravel);
+    }
+
+    //TextView changes after new Radiobutton/Spinner gets selected
+    public void changeUnitView()
+    {
+        Log.i("CHANGE UNIT VIEW",memory.getSelectedRadioHome() +"");
+        Log.i("CHANGE UNIT VIEW", main.radioHome[0].getText().toString());
+        main.homeunitview.setText(main.radioHome[memory.getSelectedRadioHome()].getText().toString());
+        main.travelunitview.setText(main.radioTravel[memory.getSelectedRadioTravel()].getText().toString());
+        return;
+    }
+
+    private DecimalFormat custumDecimalFormat(double sol)
+    {
+        if(sol > 0.0001) {
+            return  new DecimalFormat("0.####");
+        }else{
+            return new DecimalFormat ("0.0000E0");
+        }
     }
 }

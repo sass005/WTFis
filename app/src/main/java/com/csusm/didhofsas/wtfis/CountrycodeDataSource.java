@@ -2,28 +2,71 @@ package com.csusm.didhofsas.wtfis;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import static android.R.attr.value;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class CountrycodeDataSource
 {
     private static final String LOG_TAG = CountrycodeDataSource.class.getSimpleName();
     private SQLiteDatabase database;
     private CountrycodeDBHelper dbHelper;
-    private String[] colums = {
-            CountrycodeDBHelper.ID_NAME,
-            CountrycodeDBHelper.CURRENCY_NAME,
-            CountrycodeDBHelper.HOME_COUNTRY_SET_NAME,
-            CountrycodeDBHelper.TRAVEL_COUNTRY_SET_NAME
+    public static final String[] COUNTRY_COLUMNS = {
+            CountrycodeDBHelper.COUNTRY_ID,
+            CountrycodeDBHelper.COUNTRY_NAME,
+            CountrycodeDBHelper.COUNTRY_TEMP_IN_CELSIUS
+    };
+    public static final String[] USER_COLUMNS = {
+            CountrycodeDBHelper.APPUSER_ID,
+            CountrycodeDBHelper.APPUSER_LAST_HOME,
+            CountrycodeDBHelper.APPUSER_LAST_TRAVEL
+    };
+    public static final String[] COUNTRY_USER_COLUMNS = {
+            CountrycodeDBHelper.COUNTRY_UNIT_ID,
+            CountrycodeDBHelper.COUNTRY_UNIT_COUNTRY_ID,
+            CountrycodeDBHelper.COUNTRY_UNIT_UNIT_ID
+    };
+
+    public static final String[] UNIT_COLUMNS = {
+            CountrycodeDBHelper.UNIT_ID,
+            CountrycodeDBHelper.UNIT_NAME,
+            CountrycodeDBHelper.UNIT_CALC_FACTOR,
+            CountrycodeDBHelper.UNIT_MEASURE_ID
+    };
+
+    public static final String[] MEASURE_COLUMNS = {
+            CountrycodeDBHelper.MEASURE_ID,
+            CountrycodeDBHelper.MEASURE_NAME,
+            CountrycodeDBHelper.MEASURE_STANDARD_UNIT
+    };
+
+    public static final String[] CURRENCY_COLUMNS = {
+            CountrycodeDBHelper.CURRENCY_ID,
+            CountrycodeDBHelper.CURRENCY_TIMESTAMP
     };
 
     public CountrycodeDataSource(Context context)
     {
         Log.d(LOG_TAG, "db Helper wird erzeugt");
         dbHelper = new CountrycodeDBHelper(context);
+    }
+
+    public CountrycodeDataSource(Context context, boolean updateForced)
+    {
+        Log.d(LOG_TAG, "db Helper wird erzeugt");
+        dbHelper = new CountrycodeDBHelper(context);
+        if(updateForced)
+        {
+            Log.d(LOG_TAG, "Update Forced");
+            open();
+            Log.d(LOG_TAG, "REBUILD IN PROGRESS");
+            dbHelper.dropAll(database);
+            dbHelper.createAll(database);
+            dbHelper.describeAll(database);
+            close();
+        }
     }
 
     public void open()
@@ -39,61 +82,110 @@ public class CountrycodeDataSource
         Log.d(LOG_TAG, "Datenbank geschlossen.");
     }
 
-    //Insert new Entry
-    public DBCountryFragment createCountrycode(int id, double currency, int homeCountrySet, int travelCountrySet)
+    //Insert new Country
+    public void createCountry(int id, String name, boolean temp_in_c)
     {
         ContentValues cv = new ContentValues();
-        cv.put(CountrycodeDBHelper.ID_NAME, id);
-        cv.put(CountrycodeDBHelper.CURRENCY_NAME, currency);
-        cv.put(CountrycodeDBHelper.HOME_COUNTRY_SET_NAME, homeCountrySet);
-        cv.put(CountrycodeDBHelper.TRAVEL_COUNTRY_SET_NAME, travelCountrySet);
+        cv.put(COUNTRY_COLUMNS[0], id);
+        cv.put(COUNTRY_COLUMNS[1], name);
+        cv.put(COUNTRY_COLUMNS[2], temp_in_c);
+        database.insert(CountrycodeDBHelper.COUNTRY_TABLE, null, cv);
+        Log.i("DATA_INSERT","Country Created: " + name);
+        //Cursor cursor = database.query(CountrycodeDBHelper.COUNTRY_TABLE, COUNTRY_COLUMNS, CountrycodeDBHelper.COUNTRY_ID + "=" + insertID, null, null, null, null);
+        //cursor.moveToFirst();
+        //DBCountryFragment countrycode = cursorToCountrycode(cursor);
+        //cursor.close();
 
-        long insertID = database.insert(CountrycodeDBHelper.TABLE_NAME, null, cv);
-        Log.i("insertID",insertID+"");
-        Cursor cursor = database.query(CountrycodeDBHelper.TABLE_NAME, colums, CountrycodeDBHelper.ID_NAME + "=" + insertID, null, null, null, null);
-        cursor.moveToFirst();
-        DBCountryFragment countrycode = cursorToCountrycode(cursor);
-        cursor.close();
-
-        return countrycode;
+        //return countrycode;
     }
 
-    public DBCountryFragment getCountryById(int id)
+    //create a new User, at the moment there should be just one User
+    public void createUser(int id)
     {
-        Cursor cursor = database.query(CountrycodeDBHelper.TABLE_NAME, colums, CountrycodeDBHelper.ID_NAME + "=" + id, null, null, null, null);
-        cursor.moveToFirst();
-        DBCountryFragment countrycode = cursorToCountrycode(cursor);
-        cursor.close();
-
-        return countrycode;
+        ContentValues cv = new ContentValues();
+        cv.put(USER_COLUMNS[0], id);
+        database.insert(CountrycodeDBHelper.APPUSER_TABLE, null, cv);
+        Log.i("DATA_INSERT","User Created, User_ID: " + id);
     }
 
-    //Get Entry by Cursor
-    private DBCountryFragment cursorToCountrycode(Cursor cursor)
+    //create a new measuretype (e.g. liquid, weight)
+    public void createMeasure (int id, String name)
     {
-        int idIndex = cursor.getColumnIndex(CountrycodeDBHelper.ID_NAME);
-        int idCurrency = cursor.getColumnIndex(CountrycodeDBHelper.CURRENCY_NAME);
-        int idHomeCountrySet = cursor.getColumnIndex(CountrycodeDBHelper.HOME_COUNTRY_SET_NAME);
-        int idTravelCountrySet = cursor.getColumnIndex(CountrycodeDBHelper.TRAVEL_COUNTRY_SET_NAME);
-
-
-
-        int id = cursor.getInt(idIndex);
-        double currency = cursor.getDouble(idCurrency);
-        int homeCountrySet = cursor.getInt(idHomeCountrySet);
-        int travelCountrySet = cursor.getInt(idTravelCountrySet);
-
-        return new DBCountryFragment(id, currency, homeCountrySet, travelCountrySet);
+        ContentValues cv = new ContentValues();
+        cv.put(MEASURE_COLUMNS[0], id);
+        cv.put(MEASURE_COLUMNS[1], name);
+        database.insert(CountrycodeDBHelper.MEASURE_TABLE, null, cv);
+        Log.i("DATA_INSERT","Measure Created, Measure ID: "+ id + ", Name: " + name);
     }
 
-    public DBCountryFragment getItemByCountrycode(int countrycode)
+    //create a Unit assigned to measuretype 3 (Currency) and also an entry in the Currency Table
+    public void createCurrency(String name, double calc_factor)
     {
-       //TODO REPLACE BY ACTUAL READ DATA
-        return new DBCountryFragment(1, 1.0, 0, 0);
+        createUnit(name, calc_factor, 3);
+        ContentValues cv = new ContentValues();
+        Date date_now = new Date();
+        long db_date =date_now.getTime();
+        cv.put(CURRENCY_COLUMNS[1], db_date);
+        database.insert(CountrycodeDBHelper.CURRENCY_TABLE, null, cv);
+        Log.i("DATA_INSERT","Currency Created, Name: " + name + ", Time Now: " + (new Date(db_date)).toString());
     }
 
-    public String[] getAllCountryNames()
+    //create a new Unit with a name, the factor for calculation and assignement to a measuretype
+    public void createUnit(String name, double calc_factor, int measure_id)
     {
-        return new String[]{"United States", "United Kingdom", "Germany"};
+        ContentValues cv = new ContentValues();
+        cv.put(UNIT_COLUMNS[1], name);
+        cv.put(UNIT_COLUMNS[2], calc_factor);
+        cv.put(UNIT_COLUMNS[3], measure_id);
+        long id = database.insert(CountrycodeDBHelper.UNIT_TABLE, null, cv);
+        Log.i("DATA_INSERT","Unit Created, Unit_ID: " + id + ", Name: " + name);
     }
+
+    //Set a Relationship between a Unit and a COuntry
+    public void linkCountryUnit(int country_id, String unit_name)
+    {
+        ContentValues cv = new ContentValues();
+        cv.put(COUNTRY_USER_COLUMNS[1], country_id);
+        cv.put(COUNTRY_USER_COLUMNS[2], dbHelper.selectUnitIDByName(unit_name, database));
+        database.insert(CountrycodeDBHelper.COUNTRY_UNIT_TABLE, null, cv);
+        Log.i("DATA_INSERT","DATA LINKED, COUNTRY_ID: " + country_id + ", Unit_Name: " + unit_name);
+    }
+
+
+    //TODO REMOVE just for test purpose
+    public void selectAllFromTable(String tableName, String[] columns)
+    {
+        dbHelper.selectAllFromTable(tableName, columns, database);
+    }
+
+    //get the entire name column of the selected table
+    public String[] selectNamesInTable(String tableName, String[] columns)
+    {
+        return dbHelper.selectNamesInTable(tableName, columns, database);
+    }
+
+    // Alle Units pro Land pro Measure
+    public ArrayList<Unit> getSelectedUnits(int country_id, int measure_id)
+    {
+        Log.i("UNITS", "GOT DATA, COUNTRY ID: " + country_id + ", MEASURE ID: " + measure_id);
+        return dbHelper.getSelectedUnits(country_id, measure_id, database);
+    }
+    //get if the Temperature in the selected Country is in Celsius
+    public boolean isTempInCelsius(int country_id)
+    {
+        return dbHelper.isTempInCelsius(country_id, database);
+    }
+    //TODO Update Currency
+    //Select Last_Home
+    public int selectLastHome()
+    {
+        return dbHelper.selectLastHome(database);
+    }
+
+    //Select Last_Travel
+    public int selectLastTravel()
+    {
+        return dbHelper.selectLastTravel(database);
+    }
+    //TODO Update Last_Home, Last_Travel
 }
