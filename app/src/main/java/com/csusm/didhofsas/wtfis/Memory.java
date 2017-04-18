@@ -75,36 +75,10 @@ public class Memory
 
     //SETTER
 
-    public void setHomeCountry(int chosenHome)
+    //TODO REWRITE
+    public void setHomeAndTravelCountry(int chosenHome, int chosenTravel)
     {
-        switch (chosenHome)
-        {
-            case 1:
-                dataHome = usData;
-                break;
-            case 2:
-                dataHome = ukData;
-                break;
-            default:
-                dataHome = euData;
-                break;
-        }
-    }
-
-    public void setTravelCountry(int chosenTravel)
-    {
-        switch (chosenTravel)
-        {
-            case 1:
-                dataTravel = usData;
-                break;
-            case 2:
-                dataTravel = ukData;
-                break;
-            default:
-                dataTravel = euData;
-                break;
-        }
+        main.db.updateLastHomeAndTravel(chosenHome, chosenTravel);
     }
 
     public void setCheckedCategory(int checkedCategory)
@@ -151,40 +125,12 @@ public class Memory
 
     public double getHomeExchangeRate()
     {
-        switch (checkedCategory)
-        {
-            case 0:
-                return dataHome.getLength()[selectedRadioHome];
-            case 1:
-                return dataHome.getWeight()[selectedRadioHome];
-            case 2:
-                return dataHome.getLiquid()[selectedRadioHome];
-            case 3:
-                return dataHome.getCurrency();
-
-            //Exception
-            default:
-                return -1;
-        }
+        return main.db.getSelectedUnits(main.db.selectLastHome(),checkedCategory).get(selectedRadioHome).calc_factor;
     }
 
     public double getTravelExchangeRate()
     {
-        switch (checkedCategory)
-        {
-            case 0:
-                return dataTravel.getLength()[selectedRadioTravel];
-            case 1:
-                return dataTravel.getWeight()[selectedRadioTravel];
-            case 2:
-                return dataTravel.getLiquid()[selectedRadioTravel];
-            case 3:
-                return dataTravel.getCurrency();
-
-            //Temperature C to F has no set Exchange Rate
-            default:
-                return -1;
-        }
+        return main.db.getSelectedUnits(main.db.selectLastTravel(),checkedCategory).get(selectedRadioTravel).calc_factor;
     }
 
     public Countrycode getDataHome() {
@@ -218,12 +164,13 @@ public class Memory
         ukData.setCurrency(gbp);
     }
 
+    //TODO remove reliability on that method getRegioncode()
     public ArrayList<Unit> getHomeUnits() {
-        return main.db.getSelectedUnits(dataHome.getRegioncode(), checkedCategory);
+        return main.db.getSelectedUnits(main.db.selectLastHome(), checkedCategory);
     }
 
     public ArrayList<Unit> getTravelUnits() {
-        return main.db.getSelectedUnits(dataTravel.getRegioncode(), checkedCategory);
+        return main.db.getSelectedUnits(main.db.selectLastTravel(), checkedCategory);
     }
 
     public int getSelectedRadioHome() {

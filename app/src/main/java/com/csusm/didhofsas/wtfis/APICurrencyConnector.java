@@ -16,7 +16,7 @@ public class APICurrencyConnector extends AsyncTask<Void, Void, String>
     {
         try
         {
-            URL url = new URL("http://api.fixer.io/latest?symbols=USD,GBP");
+            URL url = new URL("http://api.fixer.io/latest");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             try {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));

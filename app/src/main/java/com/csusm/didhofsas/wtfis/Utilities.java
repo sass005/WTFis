@@ -4,9 +4,20 @@ import android.util.Log;
 import android.view.View;
 import android.widget.RadioButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 
 public class Utilities
@@ -206,41 +217,58 @@ public class Utilities
 
 
     //API TEST
-    public void setNewCurrencyValues()
+    public void setNewCurrencyValues() throws JSONException
     {
-        APICurrencyConnector api = new APICurrencyConnector();
-        api.execute();
-        String apiReturn = null;
-        try {
-            apiReturn = api.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        if (apiReturn.charAt(0) == 'c')
-            return;
-        Log.d("Currency", "Return of API: " + apiReturn);
-        int progress = 0;
-        String sGBP = "", sUSD = "";
-        for (int i = 0; i < apiReturn.length();i++)
+        //TODO ONLY CALL API once a day
+        GregorianCalendar lastCall = new GregorianCalendar();
+        lastCall.setTimeInMillis(main.db.selectLastAPICurrencyCall());
+        SimpleTimeZone cetTime = new SimpleTimeZone(3600000,"Europe/Frankfurt");
+        GregorianCalendar timeNow = new GregorianCalendar(cetTime);
+        GregorianCalendar updateTime = new GregorianCalendar(timeNow.get(Calendar.YEAR),timeNow.get(Calendar.MONTH),timeNow.get(Calendar.DAY_OF_MONTH),18,0);
+        SimpleDateFormat df = new SimpleDateFormat("YYYY,MM,dd,HH,mm");
+        if (timeNow.before(updateTime))
+            updateTime.set(Calendar.DAY_OF_MONTH, -1);
+        if (lastCall.before(updateTime))
         {
-            if (progress == 4)
-                if(apiReturn.charAt(i) == ',')
-                    progress++;
-                else
-                    sGBP = sGBP + apiReturn.charAt(i);
-            if (progress == 6)
-                if(apiReturn.charAt(i) == '}')
-                    progress++;
-                else
-                    sUSD = sUSD + apiReturn.charAt(i);
-            if(apiReturn.charAt(i) == ':')
-                progress++;
+            Log.i("API", "New API call on " +df.format(timeNow.getTime())+ ", Last Call was on " + df.format(lastCall.getTime()));
+
+            APICurrencyConnector api = new APICurrencyConnector();
+            api.execute();
+            String apiReturn = null;
+            try {
+                apiReturn = api.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+            if (apiReturn.charAt(0) == 'c')
+                return;
+            Log.d("Currency", "Return of API: " + apiReturn);
+            JSONObject returnJSON = new JSONObject(apiReturn);
+            String date = returnJSON.getString("date");
+            Log.d("Currency", "Date: " + date);
+            JSONObject rates = returnJSON.getJSONObject("rates");
+            main.db.updateCurrency("AUD", rates.getDouble("AUD"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("BRL", rates.getDouble("BRL"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("CAD", rates.getDouble("CAD"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("CHF", rates.getDouble("CHF"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("CNY", rates.getDouble("CNY"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("DKK", rates.getDouble("DKK"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("GBP", rates.getDouble("GBP"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("INR", rates.getDouble("INR"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("JPY", rates.getDouble("JPY"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("MXN", rates.getDouble("MXN"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("NOK", rates.getDouble("NOK"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("PLN", rates.getDouble("PLN"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("SEK", rates.getDouble("SEK"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("TRY", rates.getDouble("TRY"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("RUB", rates.getDouble("RUB"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("USD", rates.getDouble("USD"),timeNow.getTimeInMillis());
+            main.db.updateCurrency("ZAR", rates.getDouble("ZAR"),timeNow.getTimeInMillis());
         }
-        Log.d("Currency","USD-String:" + sUSD);
-        Log.d("Currency","GBP-String:" + sGBP);
-        memory.setAllCurrencies(Double.parseDouble(sUSD), Double.parseDouble(sGBP));
+        else
+            Log.i("API", "API already got called at " + df.format(lastCall.getTime()));
     }
 
     //SETTER FOR THE MAIN TO ACCESS MEMORY
@@ -248,8 +276,7 @@ public class Utilities
     //Access to Memory for Main
     public void setChosenCountries(int chosenHome, int chosenTravel)
     {
-        memory.setHomeCountry(chosenHome);
-        memory.setTravelCountry(chosenTravel);
+        memory.setHomeAndTravelCountry(chosenHome, chosenTravel);
     }
 
     //Access to Memory for Main
@@ -280,7 +307,9 @@ public class Utilities
     public void changeUnitView()
     {
         Log.i("CHANGE UNIT VIEW",memory.getSelectedRadioHome() +"");
+        Log.i("CHANGE UNIT VIEW",memory.getSelectedRadioTravel() +"");
         Log.i("CHANGE UNIT VIEW", main.radioHome[0].getText().toString());
+        Log.i("CHANGE UNIT VIEW", main.radioTravel[0].getText().toString());
         main.homeunitview.setText(main.radioHome[memory.getSelectedRadioHome()].getText().toString());
         main.travelunitview.setText(main.radioTravel[memory.getSelectedRadioTravel()].getText().toString());
         return;

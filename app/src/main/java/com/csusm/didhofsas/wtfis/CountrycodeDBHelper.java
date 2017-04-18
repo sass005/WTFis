@@ -41,6 +41,7 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
     public static final String UNIT_MEASURE_ID = "measure_id";
 
     public static final String CURRENCY_ID = "c_unit_id";
+    public static final String CURRENCY_SHORTNAME ="shortname";
     public static final String CURRENCY_TIMESTAMP = "timestamp";
 
     public static final String MEASURE_ID = "measure_id";
@@ -88,7 +89,8 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
     public static final String SQL_CREATE_CURRENCY =
             "CREATE TABLE " + CURRENCY_TABLE +" ("
             +CURRENCY_ID+" INTEGER PRIMARY KEY,"
-            +CURRENCY_TIMESTAMP+" INTEGER NOT NULL,"
+            +CURRENCY_SHORTNAME+" VARCHAR(3) NOT NULL,"
+            +CURRENCY_TIMESTAMP+" INTEGER NOT NULL DEFAULT(0),"
             +"FOREIGN KEY("+CURRENCY_ID+") REFERENCES "+UNIT_TABLE+"("+UNIT_ID+"));";
 
     public CountrycodeDBHelper(Context context)
@@ -282,6 +284,7 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
             do{
                 if (c.getInt(c.getColumnIndex(COUNTRY_UNIT_COUNTRY_ID)) == country_id)
                 {
+                    Log.i("UNIT", "Country: " + c.getString(c.getColumnIndex(COUNTRY_UNIT_COUNTRY_ID)));
                     int id_temp = c.getInt(c.getColumnIndex(COUNTRY_UNIT_UNIT_ID));
                     Cursor c2 = db.query(UNIT_TABLE, null, null, null, null, null, null);
                     if (c2.moveToFirst())
@@ -297,5 +300,42 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
                 }
             }while(c.moveToNext());
         return units;
+    }
+
+    public ArrayList<String> selectAllCurrencyShorts(SQLiteDatabase db)
+    {
+        Cursor c = db.query(CURRENCY_TABLE, null, null, null, null, null, null);
+        ArrayList<String> currencyShorts = new ArrayList<String>();
+        if (c.moveToFirst())
+            do
+            {
+                currencyShorts.add(c.getString(c.getColumnIndex(CURRENCY_SHORTNAME)));
+            }while(c.moveToNext());
+        return currencyShorts;
+    }
+
+    public int selectCurrencyID(String shortname, SQLiteDatabase db)
+    {
+        Cursor c = db.query(CURRENCY_TABLE, null, null, null, null, null, null);
+        if (c.moveToFirst())
+            do
+            {
+                if (c.getString(c.getColumnIndex(CURRENCY_SHORTNAME)).equals(shortname))
+                    return c.getInt(c.getColumnIndex(CURRENCY_ID));
+            }while(c.moveToNext());
+        return -1;
+    }
+
+    public long selectLastAPICurrencyCall(SQLiteDatabase db)
+    {
+        Cursor c = db.query(CURRENCY_TABLE, null, null, null, null, null, null);
+        long lastCall = -1;
+        if (c.moveToFirst())
+            do
+            {
+                if (c.getLong(c.getColumnIndex(CURRENCY_TIMESTAMP))>lastCall)
+                    lastCall = c.getLong(c.getColumnIndex(CURRENCY_TIMESTAMP));
+            }while(c.moveToNext());
+        return lastCall;
     }
 }

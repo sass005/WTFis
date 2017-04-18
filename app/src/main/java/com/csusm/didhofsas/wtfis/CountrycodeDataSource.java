@@ -44,6 +44,7 @@ public class CountrycodeDataSource
 
     public static final String[] CURRENCY_COLUMNS = {
             CountrycodeDBHelper.CURRENCY_ID,
+            CountrycodeDBHelper.CURRENCY_SHORTNAME,
             CountrycodeDBHelper.CURRENCY_TIMESTAMP
     };
 
@@ -118,20 +119,24 @@ public class CountrycodeDataSource
         Log.i("DATA_INSERT","Measure Created, Measure ID: "+ id + ", Name: " + name);
     }
 
-    //create a Unit assigned to measuretype 3 (Currency) and also an entry in the Currency Table
-    public void createCurrency(String name, double calc_factor)
+    public void createCurrency(String name, String shortname)
     {
-        createUnit(name, calc_factor, 3);
+        createCurrency(name, shortname, 0);
+    }
+
+    //create a Unit assigned to measuretype 3 (Currency) and also an entry in the Currency Table
+    public void createCurrency(String name, String shortname, double currencyRate)
+    {
+        long id = createUnit(name, currencyRate, 3);
         ContentValues cv = new ContentValues();
-        Date date_now = new Date();
-        long db_date =date_now.getTime();
-        cv.put(CURRENCY_COLUMNS[1], db_date);
+        cv.put(CURRENCY_COLUMNS[0], id);
+        cv.put(CURRENCY_COLUMNS[1], shortname);
         database.insert(CountrycodeDBHelper.CURRENCY_TABLE, null, cv);
-        Log.i("DATA_INSERT","Currency Created, Name: " + name + ", Time Now: " + (new Date(db_date)).toString());
+        Log.i("DATA_INSERT","Currency Created, Name: " + name);
     }
 
     //create a new Unit with a name, the factor for calculation and assignement to a measuretype
-    public void createUnit(String name, double calc_factor, int measure_id)
+    public long createUnit(String name, double calc_factor, int measure_id)
     {
         ContentValues cv = new ContentValues();
         cv.put(UNIT_COLUMNS[1], name);
@@ -139,6 +144,7 @@ public class CountrycodeDataSource
         cv.put(UNIT_COLUMNS[3], measure_id);
         long id = database.insert(CountrycodeDBHelper.UNIT_TABLE, null, cv);
         Log.i("DATA_INSERT","Unit Created, Unit_ID: " + id + ", Name: " + name);
+        return id;
     }
 
     //Set a Relationship between a Unit and a COuntry
@@ -149,6 +155,29 @@ public class CountrycodeDataSource
         cv.put(COUNTRY_USER_COLUMNS[2], dbHelper.selectUnitIDByName(unit_name, database));
         database.insert(CountrycodeDBHelper.COUNTRY_UNIT_TABLE, null, cv);
         Log.i("DATA_INSERT","DATA LINKED, COUNTRY_ID: " + country_id + ", Unit_Name: " + unit_name);
+    }
+
+    //TODO Update Last_Home, Last_Travel
+    public void updateLastHomeAndTravel(int chosenHome, int chosenTravel)
+    {
+        ContentValues cv = new ContentValues();
+        cv.put(USER_COLUMNS[1],chosenHome);
+        cv.put(USER_COLUMNS[2],chosenTravel);
+        database.update(CountrycodeDBHelper.APPUSER_TABLE, cv, null, null);
+    }
+
+    public void updateCurrency(String shortname, double rate, long timestamp)
+    {
+        ContentValues cv = new ContentValues();
+        cv.put(UNIT_COLUMNS[2],rate);
+        Log.i("UPDATE","TABLE: " + CountrycodeDBHelper.UNIT_TABLE + ", WHERE " + CountrycodeDBHelper.UNIT_ID + " = " + dbHelper.selectCurrencyID(shortname,database));
+        database.update(CountrycodeDBHelper.UNIT_TABLE, cv,CountrycodeDBHelper.UNIT_ID + " = " + dbHelper.selectCurrencyID(shortname,database),null);
+        Log.i("UPDATE","Currency " + shortname + " updated to " +rate);
+
+        cv = new ContentValues();
+        cv.put(CURRENCY_COLUMNS[2], timestamp);
+        database.update(CountrycodeDBHelper.CURRENCY_TABLE,cv,CountrycodeDBHelper.CURRENCY_ID + " = "+dbHelper.selectCurrencyID(shortname,database),null);
+        selectAllFromTable(CountrycodeDBHelper.UNIT_TABLE, UNIT_COLUMNS);
     }
 
 
@@ -176,6 +205,8 @@ public class CountrycodeDataSource
         return dbHelper.isTempInCelsius(country_id, database);
     }
     //TODO Update Currency
+    //public void updateCurrency();
+
     //Select Last_Home
     public int selectLastHome()
     {
@@ -187,5 +218,15 @@ public class CountrycodeDataSource
     {
         return dbHelper.selectLastTravel(database);
     }
-    //TODO Update Last_Home, Last_Travel
+
+    public ArrayList<String> selectAllCurrencyShorts()
+    {
+        return dbHelper.selectAllCurrencyShorts(database);
+    }
+
+
+    public long selectLastAPICurrencyCall()
+    {
+        return dbHelper.selectLastAPICurrencyCall(database);
+    }
 }
