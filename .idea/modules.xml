@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/WTFis.iml" filepath="$PROJECT_DIR$/WTFis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WTFisGitHub.iml" filepath="$PROJECT_DIR$/WTFisGitHub.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
