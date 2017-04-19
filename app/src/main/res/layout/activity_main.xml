@@ -228,5 +228,22 @@
         android:layout_marginLeft="38dp"
         android:layout_marginStart="38dp" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="17dp"
+        android:id="@+id/last_update_show" />
+
+    <Button
+        android:text="Tempeture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/last_update_show"
+        android:layout_toEndOf="@+id/last_update_show"
+        android:id="@+id/cTable_button" />
+
 
 </RelativeLayout>

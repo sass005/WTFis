@@ -3,21 +3,17 @@ package com.csusm.didhofsas.wtfis;
 import android.util.Log;
 import android.view.View;
 import android.widget.RadioButton;
+import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.List;
 import java.util.SimpleTimeZone;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 
 public class Utilities
@@ -48,13 +44,27 @@ public class Utilities
         if(memory.isFocusOnHome()){
             input = Double.parseDouble(main.inputHome.getText().toString());
             solution = Conversion.fixedconversion(input, memory.getHomeExchangeRate(),memory.getTravelExchangeRate());
-            DecimalFormat df = custumDecimalFormat(solution);
-            main.inputTravel.setText("" + df.format(solution));
+            if (solution == -1) {
+                Toast.makeText(main, "Aliens attacked the database and stole the data for this currency! We are very sorry.", Toast.LENGTH_LONG).show();
+                main.inputTravel.setText("");
+                main.inputHome.setText("");
+            }
+            else {
+                DecimalFormat df = custumDecimalFormat(solution);
+                main.inputTravel.setText("" + df.format(solution));
+            }
         }else{
             input = Double.parseDouble(main.inputTravel.getText().toString());
             solution = Conversion.fixedconversion(input, memory.getTravelExchangeRate(),memory.getHomeExchangeRate());
-            DecimalFormat df = custumDecimalFormat(solution);
-            main.inputHome.setText("" + df.format(solution));
+            if (solution == -1) {
+                Toast.makeText(main, "Aliens attacked the database and stole the data for this currency! We are very sorry.", Toast.LENGTH_LONG).show();
+                main.inputTravel.setText("");
+                main.inputHome.setText("");
+            }
+            else {
+                DecimalFormat df = custumDecimalFormat(solution);
+                main.inputHome.setText("" + df.format(solution));
+            }
         }
     }
 
@@ -133,7 +143,7 @@ public class Utilities
     private void fillSingleRadio(RadioButton[] rb, ArrayList<Unit> units, int checkedCategory)
     {
         //check selected Category in spinner and save it
-
+        main.lastUpdateShow.setText("");
 
         switch (checkedCategory)
         {
@@ -182,7 +192,11 @@ public class Utilities
             case 3: //Currency
                 //set only first one visible
                 rb[0].setVisibility(View.VISIBLE);
+                GregorianCalendar lastCall = new GregorianCalendar();
+                SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+                lastCall.setTimeInMillis(main.db.selectLastAPICurrencyCall());
                 rb[0].setText(units.get(0).name);
+                main.lastUpdateShow.setText("last updated " +df.format(lastCall.getTime()));
 
                 //hide all unused Radiobuttons
                 for(int i = 1; i < 6; i++)
@@ -225,7 +239,7 @@ public class Utilities
         SimpleTimeZone cetTime = new SimpleTimeZone(3600000,"Europe/Frankfurt");
         GregorianCalendar timeNow = new GregorianCalendar(cetTime);
         GregorianCalendar updateTime = new GregorianCalendar(timeNow.get(Calendar.YEAR),timeNow.get(Calendar.MONTH),timeNow.get(Calendar.DAY_OF_MONTH),18,0);
-        SimpleDateFormat df = new SimpleDateFormat("YYYY,MM,dd,HH,mm");
+        SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy,hh:mm aa");
         if (timeNow.before(updateTime))
             updateTime.set(Calendar.DAY_OF_MONTH, -1);
         if (lastCall.before(updateTime))
@@ -310,8 +324,8 @@ public class Utilities
         Log.i("CHANGE UNIT VIEW",memory.getSelectedRadioTravel() +"");
         Log.i("CHANGE UNIT VIEW", main.radioHome[0].getText().toString());
         Log.i("CHANGE UNIT VIEW", main.radioTravel[0].getText().toString());
-        main.homeunitview.setText(main.radioHome[memory.getSelectedRadioHome()].getText().toString());
-        main.travelunitview.setText(main.radioTravel[memory.getSelectedRadioTravel()].getText().toString());
+        main.homeUnitShow.setText(main.radioHome[memory.getSelectedRadioHome()].getText().toString());
+        main.travelUnitShow.setText(main.radioTravel[memory.getSelectedRadioTravel()].getText().toString());
         return;
     }
 

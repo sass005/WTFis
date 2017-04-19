@@ -229,4 +229,9 @@ public class CountrycodeDataSource
     {
         return dbHelper.selectLastAPICurrencyCall(database);
     }
+
+    public long selectLastAPICurrencyCall(int currencyId)
+    {
+        return dbHelper.selectLastAPICurrencyCall(database, currencyId);
+    }
 }

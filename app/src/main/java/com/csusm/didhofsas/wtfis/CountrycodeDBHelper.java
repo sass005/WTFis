@@ -103,6 +103,7 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
     public void onCreate(SQLiteDatabase db)
     {
         createAll(db);
+        DatabaseTools.newDBCreated = true;
     }
 
     @Override
@@ -160,6 +161,9 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
             db.execSQL(SQL_CREATE_CURRENCY);
         }
         catch (Exception e) {Log.e(LOG_TAG, "Fehler beim Anlegen der Tabelle: " + e.getMessage());}
+
+
+
     }
 
     public void describeAll(SQLiteDatabase db)
@@ -294,7 +298,7 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
                         {
                             double calc_factor_temp = c2.getDouble(c2.getColumnIndex(UNIT_CALC_FACTOR));
                             String name_temp = c2.getString(c2.getColumnIndex(UNIT_NAME));
-                            units.add(new Unit(name_temp, calc_factor_temp));
+                            units.add(new Unit(c2.getPosition(),name_temp, calc_factor_temp));
                         }
                     }
                 }
@@ -337,5 +341,17 @@ public class CountrycodeDBHelper extends SQLiteOpenHelper
                     lastCall = c.getLong(c.getColumnIndex(CURRENCY_TIMESTAMP));
             }while(c.moveToNext());
         return lastCall;
+    }
+
+    public long selectLastAPICurrencyCall(SQLiteDatabase db, int currencyId)
+    {
+        Cursor c = db.query(CURRENCY_TABLE, null, null, null, null, null, null);
+        if (c.moveToFirst())
+            do
+            {
+                if (c.getInt(c.getColumnIndex(CURRENCY_ID))==currencyId)
+                    return c.getLong(c.getColumnIndex(CURRENCY_TIMESTAMP));
+            }while(c.moveToNext());
+        return -1;
     }
 }
